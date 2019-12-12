@@ -13,6 +13,6 @@ description = "Decodes and verifies Json Web Tokens issued by AWS Cognito"
 
 [dependencies]
 jwt-rust = { git = "https://github.com/rib/jwt-rust" }
-reqwest = { version = "0.10.0-alpha.2", features=["json"] }
+reqwest = { git = "https://github.com/seanmonstar/reqwest", features=["json"] }
 serde = { version="1", features=["derive"] }
 serde_json = "1"
