@@ -1,6 +1,6 @@
 [package]
 name = "cognito-jwt"
-version = "0.1.0-alpha.1"
+version = "0.1.0-alpha.2"
 authors = ["Robert Bragg <robert@sixbynine.org>"]
 edition = "2018"
 repository = "https://github.com/rib/cognito-jwt"
