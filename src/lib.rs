@@ -122,7 +122,7 @@ impl KeySet {
         verifier: &Verifier
     ) -> Result<T, Error> {
 
-        let header = jwt::decode_header_only(token)?;
+        let header = jwt::raw::decode_header_only(token)?;
 
         let kid = match header.get("kid") {
             Some(Value::String(kid)) => kid,
