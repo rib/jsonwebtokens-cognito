@@ -7,7 +7,7 @@ repository = "https://github.com/rib/jsonwebtokens-cognito"
 documentation = "https://docs.rs/jsonwebtokens-cognito/"
 readme = "README.md"
 license = "MIT"
-keywords = ["jwt", "token", "jwk", "jwks", "web", "api", "cognito"]
+keywords = ["jwt", "jwk", "jwks", "token", "cognito"]
 categories = ["authentication"]
 description = "Decodes and verifies Json Web Tokens issued by AWS Cognito"
 
