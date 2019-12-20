@@ -1,10 +1,10 @@
 [package]
-name = "cognito-jwt"
+name = "jsonwebtokens-cognito"
 version = "0.1.0-alpha.2"
 authors = ["Robert Bragg <robert@sixbynine.org>"]
 edition = "2018"
-repository = "https://github.com/rib/cognito-jwt"
-documentation = "https://docs.rs/cognito-jwt/"
+repository = "https://github.com/rib/jsonwebtokens-cognito"
+documentation = "https://docs.rs/jsonwebtokens-cognito/"
 readme = "README.md"
 license = "MIT"
 keywords = ["jwt", "token", "jwk", "jwks", "web", "api", "cognito"]
@@ -12,7 +12,7 @@ categories = ["authentication"]
 description = "Decodes and verifies Json Web Tokens issued by AWS Cognito"
 
 [dependencies]
-jwt-rust = { git = "https://github.com/rib/jwt-rust" }
+jsonwebtokens = { git = "https://github.com/rib/jsonwebtokens" }
 reqwest = { git = "https://github.com/seanmonstar/reqwest", features=["json"] }
 serde = { version="1", features=["derive"] }
 serde_json = "1"

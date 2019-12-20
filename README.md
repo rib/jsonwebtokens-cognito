@@ -1,9 +1,9 @@
-A minimal library to handle verifying a JWT token against an AWS Cognito JWKS key set
+A Rust library for verifying Json Web Tokens issued by AWS Cognito
 
 # Install
 
 ```
-cognito-jws = "0.1"
+jsonwebtokens-cognito = "0.1"
 ```
 
 # Usage
@@ -18,14 +18,32 @@ let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
 let claims: MyClaims = keyset.verify(token, verifier).await?;
 ```
 
-This library builds on top of [jwt-rust](https://github.com/rib/jwt-rust)
+This library builds on top of [jsonwebtokens](https://crates.io/crate/jsonwebtokens)
 token verifiers.
 
-The keyset will lazily fetch from the appropriate .jwks url when verifying
-the first token or, alternatively the cache can be primed by calling
+The keyset will fetch from the appropriate .jwks url when verifying the first
+token or, alternatively the cache can be primed by calling
 `keyset.get_jwks()`.
 
 The keyset is Send safe so it can be used for authentication within a
-multi-threaded server. The key caching is handled with interior mutability
-so you don't need to hold a mutable reference to the keyset when
-validating a token.
+multi-threaded server.
+
+# Examples:
+
+## Verify an AWS Cognito Access token
+
+```rust
+let keyset = KeySet::new(AWS_REGION, AWS_POOL_ID)?;
+let verifier = keyset.new_access_token_verifier(&[AWS_CLIENT_ID]).build()?;
+
+keyset.verify(&token_str, &verifier).await?;
+```
+
+## Verify an AWS Cognito Identity token
+
+```rust
+let keyset = KeySet::new(AWS_REGION, AWS_POOL_ID)?;
+let verifier = keyset.new_id_token_verifier(&[AWS_CLIENT_ID]).build()?;
+
+keyset.verify(&token_str, &verifier).await?;
+```

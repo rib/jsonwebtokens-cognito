@@ -10,7 +10,7 @@ use serde_json;
 
 use reqwest::{self, Response};
 
-use jwt_rust as jwt;
+use jsonwebtokens as jwt;
 use jwt::{Algorithm, AlgorithmID, Verifier, VerifierBuilder};
 
 mod error;
@@ -172,7 +172,7 @@ impl KeySet {
             let mut algorithm = Algorithm::new_rsa_n_e_b64_verifier(AlgorithmID::RS256, &key.n, &key.e)?;
             // By associating a kid here we will essentially be double checking
             // that we only verify a token with the key matching its associated kid
-            // (once by us and jwt-rust will also check too)
+            // (once by us and jsonwebtokens will also check too)
             algorithm.set_kid(&key.kid);
             writeable_cache.algorithms.insert(key.kid.clone(), Arc::new(algorithm));
         }

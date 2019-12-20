@@ -1,6 +1,6 @@
 use std::error::Error as StdError;
 use std::fmt;
-use jwt_rust as jwt;
+use jsonwebtokens as jwt;
 use jwt::error::Error as JwtError;
 
 #[derive(Debug)]
