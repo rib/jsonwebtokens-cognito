@@ -64,7 +64,7 @@ impl KeySet {
                 last_jwks_get_time: None,
                 algorithms: HashMap::new()
             })),
-            min_jwks_fetch_interval: Duration::from_secs(60 * 5),
+            min_jwks_fetch_interval: Duration::from_secs(60),
         })
     }
 
@@ -82,8 +82,17 @@ impl KeySet {
         builder
     }
 
-    pub fn min_jwks_fetch_interval(&mut self, interval: Duration) {
+    /// Set's the minimum time between attempts to fetch the remote JWKS key set
+    ///
+    /// By default this is one minute, to throttle requests in case there is a
+    /// transient network problem
+    pub fn set_min_jwks_fetch_interval(&mut self, interval: Duration) {
         self.min_jwks_fetch_interval = interval;
+    }
+
+    /// Get's the minimum time between attempts to fetch the remote JWKS key set
+    pub fn min_jwks_fetch_interval(&mut self) -> Duration {
+        self.min_jwks_fetch_interval
     }
 
     /// Returns a `VerifierBuilder` that has been pre-configured to validate an
