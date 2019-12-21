@@ -4,7 +4,6 @@ use std::time::{Duration, Instant};
 use std::collections::HashMap;
 
 use serde::{Deserialize};
-use serde::de::DeserializeOwned;
 use serde_json::value::Value;
 use serde_json;
 
@@ -116,11 +115,11 @@ impl KeySet {
         }
     }
 
-    pub async fn verify<T: DeserializeOwned + 'static>(
+    pub async fn verify(
         &self,
         token: &str,
         verifier: &Verifier
-    ) -> Result<T, Error> {
+    ) -> Result<serde_json::value::Value, Error> {
 
         let header = jwt::raw::decode_header_only(token)?;
 
@@ -149,8 +148,8 @@ impl KeySet {
             (Some(a), _) => a
         };
 
-        let ret: T = verifier.verify(token, &algorithm)?;
-        Ok(ret)
+        let claims = verifier.verify(token, &algorithm)?;
+        Ok(claims)
     }
 
     pub async fn get_jwks(&self) -> Result<(), Error> {
