@@ -47,3 +47,17 @@ let verifier = keyset.new_id_token_verifier(&[AWS_CLIENT_ID]).build()?;
 
 keyset.verify(&token_str, &verifier).await?;
 ```
+
+## Verify an AWS Cognito Access token with custom claims
+
+```rust
+let keyset = KeySet::new(AWS_REGION, AWS_POOL_ID)?;
+let verifier = keyset.new_access_token_verifier(&[AWS_CLIENT_ID])
+    .claim_equals("my_claim", "foo")
+    .build()?;
+
+keyset.verify(&token_str, &verifier).await?;
+```
+
+See [jsonwebtokens](https://crates.io/crate/jsonwebtokens) for more examples
+of how to verify custom claims.

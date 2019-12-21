@@ -45,6 +45,9 @@ pub struct KeySet {
 }
 
 impl KeySet {
+
+    /// Constructs a key set that corresponds to a remote Json Web Key Set published
+    /// by Amazon for a given region and Cognito User Pool ID.
     pub fn new(region: impl Into<String>,
                pool_id: impl Into<String>
     ) -> Result<Self, Error> {
@@ -124,6 +127,7 @@ impl KeySet {
         }
     }
 
+    /// Verify a token's signature and its claims
     pub async fn verify(
         &self,
         token: &str,
