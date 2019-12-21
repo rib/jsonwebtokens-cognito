@@ -139,7 +139,7 @@ impl KeySet {
                     return Err(Error::NetworkError(ErrorDetails::new("Key set is currently unreachable (throttled)")))
                 }
 
-                self.get_jwks().await?;
+                self.prefetch_jwks().await?;
                 match self.try_cache_fetch_algorithm(kid)? {
                     (None, _) => return Err(Error::NetworkError(ErrorDetails::new("Failed to get key set"))),
                     (Some(a), _) => a
@@ -152,7 +152,8 @@ impl KeySet {
         Ok(claims)
     }
 
-    pub async fn get_jwks(&self) -> Result<(), Error> {
+    /// Ensure the remote Json Web Key Set is downloaded and cached
+    pub async fn prefetch_jwks(&self) -> Result<(), Error> {
         let resp: Response = reqwest::get(&self.jwks_url).await?;
         let jwks: JwkSet = resp.json().await?;
 
