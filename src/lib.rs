@@ -34,6 +34,46 @@ struct Cache {
     algorithms: HashMap<String, Arc<Algorithm>>,
 }
 
+/// Abstracts a remote Amazon Cognito JWKS key set
+///
+/// The key set represents the public key information for one or more RSA keys that
+/// Amazon Cognito uses to sign tokens. To verify a token from Cognito the token's
+/// `kid` is used to look up the corresponding public key from this set which can
+/// be used to verify the token's signature.
+///
+/// Building on top of the Verifier API from jsonwebtokens, a KeySet provides some
+/// helpers for building a Verifier for Cognito Access token claims or ID token
+/// claims - referencing the region and pool details used to construct the keyset.
+///
+/// Example:
+/// ```no_run
+/// # use jsonwebtokens_cognito::KeySet;
+/// # use tokio::prelude::*;
+/// # #[tokio::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
+/// let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
+///     .claim_equals("custom_claim0", "value")
+///     .claim_equals("custom_claim1", "value")
+///     .build()?;
+/// # let token = "header.payload.signature";
+/// let claims = keyset.verify(token, &verifier).await?;
+/// # Ok(())
+/// # }
+/// ```
+///
+/// Internally a KeySet holds a cache of Algorithm structs (see the jsonwebtokens
+/// API for further details) where each Algorithm represents one RSA public key.
+///
+/// Although `keyset.verify()` can be very convenient, if you need to avoid network
+/// I/O when verifying tokens it's also possible to prefetch the remote JWKS key
+/// set ahead of time and `try_verify()` can be used to verify a token without any
+/// network I/O. This can be useful if you don't have an async context when
+/// verifying tokens.
+///
+/// It's possible to perform cache lookups directly to access an Algorithm if
+/// you need to use the jsonwebtokens API directly.
+///
 #[derive(Debug, Clone)]
 pub struct KeySet {
     region: String,
@@ -112,7 +152,14 @@ impl KeySet {
         builder
     }
 
-    fn try_cache_fetch_algorithm(&self, kid: &str) -> Result<(Option<Arc<Algorithm>>, Option<Instant>), Error> {
+    /// Looks for a cached Algorithm based on the given JWT token's key ID ('kid')
+    ///
+    /// This is a lower-level API in case you need to use the jsonwebtokens
+    /// Algorithm API directly.
+    ///
+    /// Returns a Arc<Algorithm> corresponding to the give key ID (`kid`) or returns
+    /// a `CacheMiss` error if the Algorithm / key is not cached.
+    pub fn try_cache_lookup_algorithm(&self, kid: &str) -> Result<Arc<Algorithm>, Error> {
 
         // We unwrap, because poisoning would imply something else had gone
         // badly wrong (there should be nothing that can cause a panic while
@@ -121,9 +168,9 @@ impl KeySet {
 
         let a = readable_cache.algorithms.get(kid);
         if let Some(alg) = a {
-            Ok((Some(alg.clone()), readable_cache.last_jwks_get_time))
+            return Ok(alg.clone());
         } else {
-            Ok((None, readable_cache.last_jwks_get_time))
+            return Err(Error::CacheMiss(readable_cache.last_jwks_get_time));
         }
     }
 
@@ -141,8 +188,8 @@ impl KeySet {
             _ => return Err(Error::NoKeyID()),
         };
 
-        let algorithm = match self.try_cache_fetch_algorithm(kid)? {
-            (None, last_update_time) => {
+        let algorithm = match self.try_cache_lookup_algorithm(kid) {
+            Err(Error::CacheMiss(last_update_time)) => {
                 let duration = match last_update_time {
                     Some(last_jwks_get_time) => Instant::now().duration_since(last_jwks_get_time),
                     None => self.min_jwks_fetch_interval
@@ -153,15 +200,39 @@ impl KeySet {
                 }
 
                 self.prefetch_jwks().await?;
-                match self.try_cache_fetch_algorithm(kid)? {
-                    (None, _) => return Err(Error::NetworkError(ErrorDetails::new("Failed to get key set"))),
-                    (Some(a), _) => a
-                }
+                self.try_cache_lookup_algorithm(kid)?
             },
-            (Some(a), _) => a
+            Err(e) => {
+                // try_cache_lookup_algorithm shouldn't return any other kind of error...
+                unreachable!("Unexpected error looking up JWT Algorithm for key ID: {:?}", e);
+            }
+            Ok(alg) => alg
         };
 
         let claims = verifier.verify(token, &algorithm)?;
+        Ok(claims)
+    }
+
+    /// Try and verify a token's signature and claims without performing any network I/O
+    ///
+    /// To be able to verify a token in a synchronous context (but without blocking) this
+    /// API lets you try and verify a token, and if the required Algorithm / key has not
+    /// been cached yet then it will return a `CacheMiss` error.
+    pub fn try_verify(
+        &self,
+        token: &str,
+        verifier: &Verifier
+    ) -> Result<serde_json::value::Value, Error> {
+
+        let header = jwt::raw::decode_header_only(token)?;
+
+        let kid = match header.get("kid") {
+            Some(Value::String(kid)) => kid,
+            _ => return Err(Error::NoKeyID()),
+        };
+
+        let alg = self.try_cache_lookup_algorithm(kid)?;
+        let claims = verifier.verify(token, &alg)?;
         Ok(claims)
     }
 

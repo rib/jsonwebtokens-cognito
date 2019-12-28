@@ -9,13 +9,13 @@ jsonwebtokens-cognito = "0.1"
 # Usage
 
 ```rust
-let keyset = KeySet::new("eu-west-1", "my-user-pool-id");
+let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
 let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
     .claim_equals("custom_claim0", "value")
     .claim_equals("custom_claim1", "value")
-    .build();
+    .build()?;
 
-let claims: MyClaims = keyset.verify(token, verifier).await?;
+let claims = keyset.verify(token, &verifier).await?;
 ```
 
 This library builds on top of [jsonwebtokens](https://crates.io/crate/jsonwebtokens)
@@ -23,9 +23,30 @@ token verifiers.
 
 The keyset will fetch from the appropriate .jwks url when verifying the first
 token or, alternatively the cache can be primed by calling
-`keyset.get_jwks()`.
+`keyset.prefetch_jwks()`:
 
-The keyset is Send safe so it can be used for authentication within a
+```rust
+let keyset = KeySet::new("eu-west-1", "my-user-pool-id");
+keyset.prefetch_jwks()?;
+```
+
+If you need to perform token verification in a non-async context, or don't
+wan't to allow network I/O while verifying tokens then if you have explicitly
+prefetched the jwks key set you can verify tokens with `try_verify`:
+```rust
+let keyset = KeySet::new("eu-west-1", "my-user-pool-id");
+keyset.prefetch_jwks()?;
+let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
+    .claim_equals("custom_claim0", "value")
+    .claim_equals("custom_claim1", "value")
+    .build();
+
+let claims = keyset.try_verify(token, verifier).await?;
+```
+_try_verify() will return a CacheMiss error if the required key has not been
+prefetched_
+
+A Keyset is Send safe so it can be used for authentication within a
 multi-threaded server.
 
 # Examples:

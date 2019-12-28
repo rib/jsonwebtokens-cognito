@@ -1,5 +1,7 @@
 use std::error::Error as StdError;
 use std::fmt;
+use std::time::Instant;
+
 use jsonwebtokens as jwt;
 use jwt::error::Error as JwtError;
 
@@ -58,6 +60,11 @@ pub enum Error {
     /// Failed to fetch remote jwks key set
     NetworkError(ErrorDetails),
 
+    /// try_verify() failed because the required Algorithm/key wasn't cached
+    ///
+    /// The included Instant indicates when the cache was last updated (if not None)
+    CacheMiss(Option<Instant>),
+
     #[doc(hidden)]
     __Nonexhaustive
 }
@@ -77,6 +84,7 @@ impl fmt::Display for Error {
                 }
             }
             Error::NetworkError(details) => write!(f, "Error fetching JWKS key set: {}", details.desc),
+            Error::CacheMiss(_) => write!(f, "Failed to lookup corresponding Algorithm / key"),
             Error::__Nonexhaustive => { write!(f, "Unknown error") }
         }
     }
