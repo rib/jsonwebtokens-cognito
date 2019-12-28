@@ -41,15 +41,17 @@ struct Cache {
 /// `kid` is used to look up the corresponding public key from this set which can
 /// be used to verify the token's signature.
 ///
-/// Building on top of the Verifier API from jsonwebtokens, a KeySet provides some
-/// helpers for building a Verifier for Cognito Access token claims or ID token
-/// claims - referencing the region and pool details used to construct the keyset.
+/// Building on top of the [Verifier](https://docs.rs/jsonwebtokens/1.0.0-alpha.8/jsonwebtokens/struct.Verifier.html)
+/// API from [jsonwebtokens](https://crates.io/crates/jsonwebtokens), a KeySet provides some
+/// helpers for building a [Verifier](https://docs.rs/jsonwebtokens/1.0.0-alpha.8/jsonwebtokens/struct.Verifier.html)
+/// for Cognito Access token claims or ID token claims - referencing the region and
+/// pool details used to construct the keyset.
 ///
 /// Example:
-/// ```ignore
+/// ```no_run
 /// # use jsonwebtokens_cognito::KeySet;
-/// # use tokio::prelude::*;
-/// # #[tokio::main]
+/// # use async_std::prelude::*;
+/// # #[async_std::main]
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
 /// let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
@@ -71,8 +73,54 @@ struct Cache {
 /// network I/O. This can be useful if you don't have an async context when
 /// verifying tokens.
 ///
-/// It's possible to perform cache lookups directly to access an Algorithm if
-/// you need to use the jsonwebtokens API directly.
+/// ```no_run
+/// # use jsonwebtokens_cognito::KeySet;
+/// # use async_std::prelude::*;
+/// # #[async_std::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
+/// keyset.prefetch_jwks().await?;
+/// let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
+///     .claim_equals("custom_claim0", "value")
+///     .claim_equals("custom_claim1", "value")
+///     .build()?;
+/// # let token = "header.payload.signature";
+/// let claims = keyset.try_verify(token, &verifier)?;
+/// # Ok(())
+/// # }
+/// ```
+///
+/// It's also possible to perform cache lookups directly to access an Algorithm if
+/// you need to use the jsonwebtokens API directly:
+/// ```no_run
+/// # use jsonwebtokens_cognito::KeySet;
+/// # use jsonwebtokens as jwt;
+/// # use serde_json::value::Value;
+/// # use async_std::prelude::*;
+/// # #[async_std::main]
+/// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
+/// # let token = "header.payload.signature";
+/// let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
+/// keyset.prefetch_jwks().await?;
+///
+/// let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
+///     .claim_equals("custom_claim0", "value")
+///     .claim_equals("custom_claim1", "value")
+///     .build()?;
+///
+/// let header = jwt::raw::decode_header_only(token)?;
+/// if let Some(Value::String(kid)) = header.get("kid") {
+///     let alg = keyset.try_cache_lookup_algorithm(kid)?;
+///     let claims = verifier.verify(token, &alg)?;
+///
+///     // Whoop!
+/// } else {
+///     Err(jwt::error::Error::MalformedToken(jwt::error::ErrorDetails::new("Missing kid")))?;
+/// };
+/// # Ok(())
+/// # }
+/// ```
+
 ///
 #[derive(Debug, Clone)]
 pub struct KeySet {
@@ -157,7 +205,7 @@ impl KeySet {
     /// This is a lower-level API in case you need to use the jsonwebtokens
     /// Algorithm API directly.
     ///
-    /// Returns a Arc<Algorithm> corresponding to the give key ID (`kid`) or returns
+    /// Returns an `Arc<Algorithm>` corresponding to the give key ID (`kid`) or returns
     /// a `CacheMiss` error if the Algorithm / key is not cached.
     pub fn try_cache_lookup_algorithm(&self, kid: &str) -> Result<Arc<Algorithm>, Error> {
 
