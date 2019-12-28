@@ -46,7 +46,7 @@ struct Cache {
 /// claims - referencing the region and pool details used to construct the keyset.
 ///
 /// Example:
-/// ```no_run
+/// ```ignore
 /// # use jsonwebtokens_cognito::KeySet;
 /// # use tokio::prelude::*;
 /// # #[tokio::main]
