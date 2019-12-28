@@ -29,20 +29,20 @@ token or, alternatively the cache can be primed by calling
 `keyset.prefetch_jwks()`:
 
 ```rust
-let keyset = KeySet::new("eu-west-1", "my-user-pool-id");
-keyset.prefetch_jwks()?;
+let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
+keyset.prefetch_jwks().await?;
 ```
 
 If you need to perform token verification in a non-async context, or don't
 wan't to allow network I/O while verifying tokens then if you have explicitly
 prefetched the jwks key set you can verify tokens with `try_verify`:
 ```rust
-let keyset = KeySet::new("eu-west-1", "my-user-pool-id");
-keyset.prefetch_jwks()?;
+let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
+keyset.prefetch_jwks().await?;
 let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
     .claim_equals("custom_claim0", "value")
     .claim_equals("custom_claim1", "value")
-    .build();
+    .build()?;
 
 let claims = keyset.try_verify(token, verifier).await?;
 ```
