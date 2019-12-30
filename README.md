@@ -3,11 +3,8 @@ A Rust library for verifying Json Web Tokens issued by AWS Cognito
 # Install
 
 ```
-jsonwebtokens-cognito = { git = "https://github.com/rib/jsonwebtokens-cognito" }
+jsonwebtokens-cognito = "0.1.0-alpha"
 ```
-_Note: Until reqwest gets a 0.10 release it's recommended to depend on git master
-because the latest reqwest release depends on numerous pre-release crate versions
-for things like tokio and hyper which are very likely to cause conflicts_
 
 # Usage
 
