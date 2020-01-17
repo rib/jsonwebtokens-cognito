@@ -55,8 +55,8 @@ struct Cache {
 /// # async fn main() -> Result<(), Box<dyn std::error::Error>> {
 /// let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
 /// let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
-///     .claim_equals("custom_claim0", "value")
-///     .claim_equals("custom_claim1", "value")
+///     .string_equals("custom_claim0", "value")
+///     .string_equals("custom_claim1", "value")
 ///     .build()?;
 /// # let token = "header.payload.signature";
 /// let claims = keyset.verify(token, &verifier).await?;
@@ -81,8 +81,8 @@ struct Cache {
 /// let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
 /// keyset.prefetch_jwks().await?;
 /// let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
-///     .claim_equals("custom_claim0", "value")
-///     .claim_equals("custom_claim1", "value")
+///     .string_equals("custom_claim0", "value")
+///     .string_equals("custom_claim1", "value")
 ///     .build()?;
 /// # let token = "header.payload.signature";
 /// let claims = keyset.try_verify(token, &verifier)?;
@@ -104,8 +104,8 @@ struct Cache {
 /// keyset.prefetch_jwks().await?;
 ///
 /// let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
-///     .claim_equals("custom_claim0", "value")
-///     .claim_equals("custom_claim1", "value")
+///     .string_equals("custom_claim0", "value")
+///     .string_equals("custom_claim1", "value")
 ///     .build()?;
 ///
 /// let header = jwt::raw::decode_header_only(token)?;
@@ -166,9 +166,9 @@ impl KeySet {
         let mut builder = Verifier::create();
 
         builder
-            .claim_equals("iss", &self.iss)
-            .claim_equals_one_of("aud", client_ids)
-            .claim_equals("token_use", "id");
+            .string_equals("iss", &self.iss)
+            .string_equals_one_of("aud", client_ids)
+            .string_equals("token_use", "id");
 
         builder
     }
@@ -193,9 +193,9 @@ impl KeySet {
         let mut builder = Verifier::create();
 
         builder
-            .claim_equals("iss", &self.iss)
-            .claim_equals_one_of("client_id", client_ids)
-            .claim_equals("token_use", "access");
+            .string_equals("iss", &self.iss)
+            .string_equals_one_of("client_id", client_ids)
+            .string_equals("token_use", "access");
 
         builder
     }

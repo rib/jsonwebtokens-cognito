@@ -11,8 +11,8 @@ jsonwebtokens-cognito = "0.1.0-alpha"
 ```rust
 let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
 let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
-    .claim_equals("custom_claim0", "value")
-    .claim_equals("custom_claim1", "value")
+    .string_equals("custom_claim0", "value")
+    .string_equals("custom_claim1", "value")
     .build()?;
 
 let claims = keyset.verify(token, &verifier).await?;
@@ -37,8 +37,8 @@ prefetched the jwks key set you can verify tokens with `try_verify`:
 let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
 keyset.prefetch_jwks().await?;
 let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
-    .claim_equals("custom_claim0", "value")
-    .claim_equals("custom_claim1", "value")
+    .string_equals("custom_claim0", "value")
+    .string_equals("custom_claim1", "value")
     .build()?;
 
 let claims = keyset.try_verify(token, verifier).await?;
@@ -74,7 +74,7 @@ keyset.verify(&token_str, &verifier).await?;
 ```rust
 let keyset = KeySet::new(AWS_REGION, AWS_POOL_ID)?;
 let verifier = keyset.new_access_token_verifier(&[AWS_CLIENT_ID])
-    .claim_equals("my_claim", "foo")
+    .string_equals("my_claim", "foo")
     .build()?;
 
 keyset.verify(&token_str, &verifier).await?;
