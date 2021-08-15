@@ -1,6 +1,6 @@
 [package]
 name = "jsonwebtokens-cognito"
-version = "0.1.0-alpha.9"
+version = "0.1.0-alpha.10"
 authors = ["Robert Bragg <robert@sixbynine.org>"]
 edition = "2018"
 repository = "https://github.com/rib/jsonwebtokens-cognito"
@@ -12,10 +12,10 @@ categories = ["authentication"]
 description = "Decodes and verifies Json Web Tokens issued by AWS Cognito"
 
 [dependencies]
-jsonwebtokens = "1.0.0-alpha"
-reqwest = { version = "0.10", features=["json"] }
+jsonwebtokens = "1"
+reqwest = { version = "0.11", features=["json"] }
 serde = { version="1", features=["derive"] }
 serde_json = "1"
 
 [dev-dependencies]
-async-std = { version = "1.4.0", features = [ "attributes" ] }
+async-std = { version = "1", features = [ "attributes" ] }
