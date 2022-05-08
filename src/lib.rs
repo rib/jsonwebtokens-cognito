@@ -222,6 +222,29 @@ impl KeySet {
         }
     }
 
+    async fn wait_and_cache_lookup_algorithm(&self, kid: &str) -> Result<Arc<Algorithm>, Error> {
+        match self.try_cache_lookup_algorithm(kid) {
+            Err(Error::CacheMiss(last_update_time)) => {
+                let duration = match last_update_time {
+                    Some(last_jwks_get_time) => Instant::now().duration_since(last_jwks_get_time),
+                    None => self.min_jwks_fetch_interval
+                };
+
+                if duration < self.min_jwks_fetch_interval {
+                    return Err(Error::NetworkError(ErrorDetails::new("Key set is currently unreachable (throttled)")))
+                }
+
+                self.prefetch_jwks().await?;
+                self.try_cache_lookup_algorithm(kid)
+            },
+            Err(e) => {
+                // try_cache_lookup_algorithm shouldn't return any other kind of error...
+                unreachable!("Unexpected error looking up JWT Algorithm for key ID: {:?}", e);
+            }
+            Ok(alg) => Ok(alg)
+        }
+    }
+
     /// Verify a token's signature and its claims
     pub async fn verify(
         &self,
@@ -236,29 +259,31 @@ impl KeySet {
             _ => return Err(Error::NoKeyID()),
         };
 
-        let algorithm = match self.try_cache_lookup_algorithm(kid) {
-            Err(Error::CacheMiss(last_update_time)) => {
-                let duration = match last_update_time {
-                    Some(last_jwks_get_time) => Instant::now().duration_since(last_jwks_get_time),
-                    None => self.min_jwks_fetch_interval
-                };
-
-                if duration < self.min_jwks_fetch_interval {
-                    return Err(Error::NetworkError(ErrorDetails::new("Key set is currently unreachable (throttled)")))
-                }
-
-                self.prefetch_jwks().await?;
-                self.try_cache_lookup_algorithm(kid)?
-            },
-            Err(e) => {
-                // try_cache_lookup_algorithm shouldn't return any other kind of error...
-                unreachable!("Unexpected error looking up JWT Algorithm for key ID: {:?}", e);
-            }
-            Ok(alg) => alg
-        };
+        let algorithm = self.wait_and_cache_lookup_algorithm(kid).await?;
 
         let claims = verifier.verify(token, &algorithm)?;
         Ok(claims)
+    }
+
+    /// Verify a token's signature and its claims, given a specific unix epoch timestamp
+    pub async fn verify_for_time(
+        &self,
+        token: &str,
+        verifier: &Verifier,
+        time_now: u64
+    ) -> Result<jsonwebtokens::TokenData, Error> {
+
+        let header = jwt::raw::decode_header_only(token)?;
+
+        let kid = match header.get("kid") {
+            Some(Value::String(kid)) => kid,
+            _ => return Err(Error::NoKeyID()),
+        };
+
+        let algorithm = self.wait_and_cache_lookup_algorithm(kid).await?;
+
+        let token_data = verifier.verify_for_time(token, &algorithm, time_now)?;
+        Ok(token_data)
     }
 
     /// Try and verify a token's signature and claims without performing any network I/O
