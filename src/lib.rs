@@ -124,8 +124,8 @@ struct Cache {
 ///
 #[derive(Debug, Clone)]
 pub struct KeySet {
-    region: String,
-    pool_id: String,
+    _region: String,
+    _pool_id: String,
     jwks_url: String,
     iss: String,
     cache: Arc<RwLock<Cache>>,
@@ -147,8 +147,8 @@ impl KeySet {
         let iss = format!("https://cognito-idp.{}.amazonaws.com/{}", region_str, pool_id_str);
 
         Ok(KeySet {
-            region: region_str,
-            pool_id: pool_id_str,
+            _region: region_str,
+            _pool_id: pool_id_str,
             jwks_url: jwks_url,
             iss: iss,
             cache: Arc::new(RwLock::new(Cache {
