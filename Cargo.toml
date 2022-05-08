@@ -1,6 +1,6 @@
 [package]
 name = "jsonwebtokens-cognito"
-version = "0.1.0-alpha.10"
+version = "0.1.1"
 authors = ["Robert Bragg <robert@sixbynine.org>"]
 edition = "2018"
 repository = "https://github.com/rib/jsonwebtokens-cognito"
