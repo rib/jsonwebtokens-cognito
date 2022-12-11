@@ -33,6 +33,7 @@ keyset.prefetch_jwks().await?;
 If you need to perform token verification in a non-async context, or don't
 wan't to allow network I/O while verifying tokens then if you have explicitly
 prefetched the jwks key set you can verify tokens with `try_verify`:
+
 ```rust
 let keyset = KeySet::new("eu-west-1", "my-user-pool-id")?;
 keyset.prefetch_jwks().await?;
@@ -43,13 +44,14 @@ let verifier = keyset.new_id_token_verifier(&["client-id-0", "client-id-1"])
 
 let claims = keyset.try_verify(token, verifier).await?;
 ```
+
 _try_verify() will return a CacheMiss error if the required key has not been
 prefetched_
 
 A Keyset is Send safe so it can be used for authentication within a
 multi-threaded server.
 
-# Examples:
+# Examples
 
 ## Verify an AWS Cognito Access token
 
@@ -80,5 +82,5 @@ let verifier = keyset.new_access_token_verifier(&[AWS_CLIENT_ID])
 keyset.verify(&token_str, &verifier).await?;
 ```
 
-See [jsonwebtokens](https://crates.io/crate/jsonwebtokens) for more examples
+See [jsonwebtokens](https://crates.io/crates/jsonwebtokens#user-content-verifying-standard-claims) for more examples
 of how to verify custom claims.
