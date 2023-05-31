@@ -8,7 +8,7 @@ use jwt::error::Error as JwtError;
 #[derive(Debug)]
 pub struct ErrorDetails {
     desc: String,
-    src: Option<Box<dyn StdError + Send>>,
+    src: Option<Box<dyn StdError + Send + Sync>>,
 
     #[doc(hidden)]
     _extensible: (),
