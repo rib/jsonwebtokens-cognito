@@ -23,7 +23,7 @@ impl ErrorDetails {
         }
     }
 
-    pub fn map<T: 'static + StdError + Send>(desc: impl Into<String>, src: T) -> ErrorDetails {
+    pub fn map<T: 'static + StdError + Send + Sync>(desc: impl Into<String>, src: T) -> ErrorDetails {
         ErrorDetails {
             desc: desc.into(),
             src: Some(Box::new(src)),
